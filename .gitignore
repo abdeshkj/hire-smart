@@ -3,6 +3,11 @@
 .env.local
 .env.*.local
 *.env
+backend/.env
+ml-service/.env
+database/.env
+frontend/.env.local
+frontend/.env.*.local
 
 # Dependencies
 node_modules/
@@ -20,6 +25,9 @@ ENV/
 env.bak/
 venv.bak/
 .venv/
+ml-service/venv/
+ml-service/__pycache__/
+
 develop-eggs/
 dist/
 downloads/

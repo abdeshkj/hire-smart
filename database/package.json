@@ -1,0 +1,24 @@
+{
+  "name": "hire-smart-database",
+  "version": "1.0.0",
+  "description": "Database migrations and schema management for HireSmart",
+  "main": "index.js",
+  "scripts": {
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "migrate:create": "node-pg-migrate create"
+  },
+  "keywords": [
+    "hiresmart",
+    "postgres",
+    "migrations",
+    "pgvector"
+  ],
+  "author": "Abdesh Kumar",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-pg-migrate": "^7.3.0",
+    "pg": "^8.11.5"
+  }
+}
