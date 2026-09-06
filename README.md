@@ -15,8 +15,9 @@ hire-smart/
 ├── datasets/       # Training, testing, and benchmark datasets for ML models
 ├── scripts/        # Utility scripts, automated setup, deployment, and maintenance tasks
 ├── docs/           # Architecture diagrams, API documentation, and specifications
-├── .gitignore      # Git ignore rules for node, python, and environment files
 ├── .env.example    # Template for required environment variables
+├── .gitignore      # Git ignore rules for node, python, and environment files
+├── LICENSE         # MIT license terms and conditions
 └── README.md       # Project overview and setup instructions
 ```
 
@@ -79,4 +80,4 @@ The ML microservice will be running at `http://localhost:8000`.
 ---
 
 ## 📄 License
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
