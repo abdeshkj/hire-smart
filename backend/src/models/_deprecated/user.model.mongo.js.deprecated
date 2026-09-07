@@ -1,3 +1,9 @@
+/**
+ * @deprecated
+ * This Mongoose User schema is DEPRECATED.
+ * The project standardizes on PostgreSQL as the relational source of truth going forward.
+ * Superseded by the PostgreSQL `users` and `profiles` relational schema defined in database/migrations/.
+ */
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(

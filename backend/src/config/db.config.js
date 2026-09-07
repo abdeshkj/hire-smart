@@ -33,6 +33,8 @@ const testPgConnection = async () => {
 
 /**
  * MongoDB Mongoose Connection
+ * NOTE: MongoDB is not used for core relational data.
+ * The core relational source of truth standardizes on PostgreSQL (see database/migrations/).
  */
 const connectDB = async () => {
   try {
