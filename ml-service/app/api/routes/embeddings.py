@@ -5,6 +5,7 @@ from app.models.schemas import (
     EmbeddingResponse,
     ProfileEmbeddingRequest,
     JobEmbeddingRequest,
+    SkillEmbeddingRequest,
     EmbeddingWriteResponse,
 )
 from app.services.embedding_service import embedding_service
@@ -156,6 +157,77 @@ async def create_job_embedding(request: JobEmbeddingRequest) -> EmbeddingWriteRe
         )
 
     logger.info(f"Successfully generated and stored 384-dim embedding for job {job_uuid}")
+    return EmbeddingWriteResponse(success=True, dimensions=384)
+
+
+@router.post(
+    "/skill",
+    response_model=EmbeddingWriteResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Generate and store embedding for a skill"
+)
+async def create_skill_embedding(request: SkillEmbeddingRequest) -> EmbeddingWriteResponse:
+    """
+    Generate a 384-dimensional dense vector directly from the skill name
+    and persist it to skills.embedding for the given skillId.
+    """
+    # 1. Validate UUID format
+    try:
+        skill_uuid = str(uuid.UUID(str(request.skillId)))
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Skill with id '{request.skillId}' not found."
+        )
+
+    # 2. Validate skill name
+    skill_name = request.name.strip() if request.name else ""
+    if not skill_name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Skill name cannot be empty."
+        )
+
+    # 3. Generate embedding directly from the skill name
+    try:
+        embedding = embedding_service.generate_embedding(skill_name)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(ve)
+        )
+    except Exception as e:
+        logger.error(f"Embedding generation error for skill {skill_uuid}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate embedding vector."
+        )
+
+    # 4. Write vector directly to skills table
+    vector_str = str(embedding)
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE skills SET embedding = %s WHERE id = %s RETURNING id;",
+                    (vector_str, skill_uuid)
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Skill with id '{request.skillId}' not found."
+                    )
+    except HTTPException:
+        raise
+    except Exception as db_err:
+        logger.error(f"Database write failure in create_skill_embedding: {db_err}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database write failure: {str(db_err)}"
+        )
+
+    logger.info(f"Successfully generated and stored 384-dim embedding for skill {skill_uuid} ('{skill_name}')")
     return EmbeddingWriteResponse(success=True, dimensions=384)
 
 

@@ -80,7 +80,43 @@ function triggerJobEmbedding(jobId, jobFields) {
     });
 }
 
+/**
+ * Fire-and-forget trigger for skill embedding generation in the ML service.
+ * Never awaits or blocks the caller, and catches all errors internally.
+ *
+ * @param {string} skillId - UUID of the skill
+ * @param {string} name - Name of the skill
+ */
+function triggerSkillEmbedding(skillId, name) {
+  const url = `${ML_SERVICE_URL}/embeddings/skill`;
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      skillId,
+      name,
+    }),
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        console.error(
+          `[ML Service] Failed to trigger skill embedding for skill ${skillId}: HTTP ${response.status} - ${errorText}`
+        );
+      }
+    })
+    .catch((error) => {
+      console.error(
+        `[ML Service] Failed to trigger skill embedding for skill ${skillId}: ${error.message}`
+      );
+    });
+}
+
 module.exports = {
   triggerProfileEmbedding,
   triggerJobEmbedding,
+  triggerSkillEmbedding,
 };
