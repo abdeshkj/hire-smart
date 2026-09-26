@@ -1,5 +1,5 @@
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional, Union
+from pydantic import BaseModel, Field, ConfigDict
 
 # ==========================================
 # Health Schemas
@@ -21,6 +21,35 @@ class EmbeddingResponse(BaseModel):
     model: str = Field(..., description="Embedding model used")
     embeddings: List[List[float]] = Field(..., description="Generated vector embeddings")
     dimensions: int = Field(..., description="Dimensionality of the vector embeddings")
+
+class ProfileFields(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    fullName: Optional[str] = None
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    description: Optional[str] = None
+    experienceLevel: Optional[str] = None
+    experience_level: Optional[str] = None
+    yearsOfExperience: Optional[Union[int, float, str]] = None
+    years_of_experience: Optional[Union[int, float, str]] = None
+    skills: Optional[List[Union[str, dict]]] = Field(default_factory=list)
+
+class ProfileEmbeddingRequest(BaseModel):
+    userId: str = Field(..., min_length=1, description="ID of user profile to embed")
+    profileFields: ProfileFields
+
+class JobEmbeddingRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    jobId: str = Field(..., min_length=1, description="ID of job to embed")
+    title: str = Field(..., min_length=1, description="Job title")
+    description: Optional[str] = Field(default="", description="Job description")
+    experienceRequirement: Optional[str] = None
+    experience_requirement: Optional[str] = None
+    skills: Optional[List[Union[str, dict]]] = Field(default_factory=list)
+
+class EmbeddingWriteResponse(BaseModel):
+    success: bool = True
+    dimensions: int = 384
 
 
 # ==========================================
