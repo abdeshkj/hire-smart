@@ -42,17 +42,24 @@ Branch: phase/2-foundation
 ---
 
 ## Phase 3 — Smart Matching Engine
-Branch: feature/phase3-ai-matching (not yet created)
+Branch: feature/phase3-ai-matching
 
-- [ ] ⬜ Stage 1: Embeddings (all-MiniLM-L6-v2, generate job & freelancer embeddings)
-- [ ] ⬜ Stage 2: Vector retrieval (pgvector cosine similarity search, top 50)
-- [ ] ⬜ Stage 3: Re-ranking (feature extraction + Logistic Regression baseline)
-- [ ] ⬜ Explainable ranking API (fit score + reasons)
-- [ ] ⬜ Freelancer recommendation feed (reverse matching — jobs recommended to freelancers)
-- [ ] ⬜ Phase 3 checkpoint (client sees ranked freelancers, freelancer sees recommended jobs)
-- [ ] ⬜ Phase 3 git workflow
+- [x] ✅ Stage 1: Embeddings (all-MiniLM-L6-v2 via sentence-transformers, real embedding generation for profiles/jobs/skills, fire-and-forget backend triggers, verified to not block request/response and to survive ML service downtime)
+- [x] ✅ Stage 2: Vector retrieval (pgvector cosine similarity via <=> operator, per-skill max-pooling to avoid whole-profile embedding dilution, ivfflat indexes added on profiles/jobs/skills embeddings)
+- [x] ✅ Stage 3: Re-ranking (heuristic weighted combination of semantic + skill-overlap + lexical-overlap scores — explicitly documented as a placeholder for a trained model once real application/hire outcome data accumulates)
+- [x] ✅ Explainable ranking API (fit score 0-100 + human-readable reasons array, verified to produce genuinely differentiated, non-templated output across strong/partial/weak matches)
+- [x] ✅ Freelancer recommendation feed (reverse-direction matching — job-ranks-freelancers via GET /api/jobs/:jobId/candidates, freelancer-ranks-jobs via GET /api/jobs/recommended, both using the same three-signal scoring)
+- [x] ✅ Phase 3 checkpoint (client sees ranked, explained freelancers for their job; freelancer sees ranked, explained recommended jobs — both verified end-to-end through the real backend API, not just the ML service directly)
+- [ ] ⬜ Phase 3 git workflow (merge feature/phase3-ai-matching → main, create feature/phase4-rag-assistant) — pending
 
-**Phase 3 status: ⬜ NOT STARTED**
+**Phase 3 status: ✅ COMPLETE (6/7 tasks verified, git workflow pending)**
+
+### Key Implementation Notes:
+- Embedding generation runs in the Python ML service; the Node backend triggers it via fire-and-forget HTTP calls (profile/job/skill creation) that never block the user-facing response and are proven to fail safely if the ML service is down
+- Ranking retrieval (a synchronous, user-facing call) uses a 10-second timeout and converts any ML service failure into a uniform 503 "Matching service temporarily unavailable" — proven not to crash or hang the backend
+- Matching combines three signals rather than embeddings alone: semantic similarity (whole-profile/job cosine similarity), max-pooled per-skill similarity (avoids the "dilution" problem of embedding an entire skill list as one blob), and lexical exact-match overlap — this design was informed by external research findings showing embeddings alone underperform on jargon-dense skill/title text
+- Current re-ranking weights (0.4 semantic + 0.4 skill-overlap + 0.2 lexical) are a documented initial heuristic, not a trained model — this project has no real hire/application outcome data yet to train on; Phase 6 will revisit this once the live `applications`/`ratings` tables accumulate enough real data to train and evaluate a real reranker using the same Precision@5/Recall@10/NDCG@10 methodology planned for that phase
+- A known scaling limitation: the max-pooled skill similarity SQL queries currently use an unconditional join filtered afterward (acceptable at current data volume, flagged as a TODO to optimize before production scale)
 
 ---
 
@@ -111,9 +118,9 @@ Branch: feature/phase6-evaluation (not yet created)
 |---|---|---|
 | Phase 1 — Infrastructure | ✅ Complete | 8/8 |
 | Phase 2 — Core Marketplace | 🚧 In Progress | 2/9 |
-| Phase 3 — AI Matching | ⬜ Not Started | 0/6 |
+| Phase 3 — AI Matching | ✅ Complete | 6/7 |
 | Phase 4 — RAG Assistant | ⬜ Not Started | 0/7 |
 | Phase 5 — Workspace | ⬜ Not Started | 0/7 |
 | Phase 6 — Evaluation | ⬜ Not Started | 0/8 |
 
-*Last updated: 2026-09-07*
+*Last updated: 2026-09-26*

@@ -91,6 +91,27 @@ class RankingResponse(BaseModel):
     total_evaluated: int
     ranked_candidates: List[CandidateScore]
 
+class JobScore(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    job_id: str
+    title: str
+    semantic_score: float
+    skill_overlap_score: float
+    lexical_overlap_score: float
+    combined_score: float
+    matched_skills: List[str] = Field(default_factory=list)
+
+class JobRankingRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    freelancerId: Optional[str] = None
+    freelancer_id: Optional[str] = None
+    top_k: Optional[int] = Field(default=50, ge=1, le=100)
+
+class JobRankingResponse(BaseModel):
+    freelancer_id: str
+    total_evaluated: int
+    ranked_jobs: List[JobScore]
+
 
 # ==========================================
 # RAG (Retrieval-Augmented Generation) Schemas

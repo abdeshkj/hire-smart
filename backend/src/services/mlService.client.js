@@ -1,4 +1,5 @@
 const { ML_SERVICE_URL } = require('../config/env.config');
+const ApiError = require('../utils/ApiError');
 
 /**
  * Fire-and-forget trigger for profile embedding generation in the ML service.
@@ -115,8 +116,98 @@ function triggerSkillEmbedding(skillId, name) {
     });
 }
 
+/**
+ * Synchronous client call to ML service for candidate ranking retrieval.
+ * Awaited with an AbortSignal timeout.
+ *
+ * @param {string} jobId - UUID of the job
+ * @returns {Promise<Object>} - Ranking response object
+ */
+async function getRankedCandidates(jobId) {
+  const url = `${ML_SERVICE_URL}/ranking/candidates`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ jobId }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.error(
+        `[ML Service] Error fetching ranked candidates for job ${jobId}: HTTP ${response.status} - ${errorText}`
+      );
+      if (response.status === 404) {
+        throw new ApiError(404, 'Job not found');
+      }
+      throw new ApiError(503, 'Matching service temporarily unavailable');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    console.error(
+      `[ML Service] Down, unreachable, or timed out for job ${jobId}: ${error.message}`
+    );
+    throw new ApiError(503, 'Matching service temporarily unavailable');
+  }
+}
+
+/**
+ * Synchronous client call to ML service for job recommendation retrieval.
+ * Awaited with an AbortSignal timeout.
+ *
+ * @param {string} freelancerId - UUID of the freelancer
+ * @returns {Promise<Object>} - Job ranking response object
+ */
+async function getRankedJobs(freelancerId) {
+  const url = `${ML_SERVICE_URL}/ranking/jobs`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ freelancerId }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.error(
+        `[ML Service] Error fetching ranked jobs for freelancer ${freelancerId}: HTTP ${response.status} - ${errorText}`
+      );
+      if (response.status === 404) {
+        throw new ApiError(404, 'Freelancer not found');
+      }
+      throw new ApiError(503, 'Matching service temporarily unavailable');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    console.error(
+      `[ML Service] Down, unreachable, or timed out for freelancer ${freelancerId}: ${error.message}`
+    );
+    throw new ApiError(503, 'Matching service temporarily unavailable');
+  }
+}
+
 module.exports = {
   triggerProfileEmbedding,
   triggerJobEmbedding,
   triggerSkillEmbedding,
+  getRankedCandidates,
+  getRankedJobs,
 };
