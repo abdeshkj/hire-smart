@@ -3,6 +3,8 @@ const {
   findProfileByUserId,
   updateProfile
 } = require('../models/profile.model');
+const { getUserSkills } = require('../models/skill.model');
+const { triggerProfileEmbedding } = require('../services/mlService.client');
 const ApiError = require('../utils/ApiError');
 
 const VALID_EXPERIENCE_LEVELS = ['entry', 'intermediate', 'expert'];
@@ -110,6 +112,17 @@ const createOrUpdateProfile = async (req, res, next) => {
         industry: industry ? industry.trim() : null
       });
 
+      const userSkills = await getUserSkills(userId);
+
+      triggerProfileEmbedding(userId, {
+        fullName: newProfile.full_name,
+        bio: newProfile.bio,
+        description: newProfile.description,
+        experienceLevel: newProfile.experience_level,
+        yearsOfExperience: newProfile.years_of_experience,
+        skills: userSkills
+      });
+
       return res.status(201).json({
         success: true,
         profile: newProfile
@@ -129,6 +142,17 @@ const createOrUpdateProfile = async (req, res, next) => {
     if (industry !== undefined) updateData.industry = industry ? industry.trim() : null;
 
     const updated = await updateProfile(userId, updateData);
+
+    const userSkills = await getUserSkills(userId);
+
+    triggerProfileEmbedding(userId, {
+      fullName: updated.full_name,
+      bio: updated.bio,
+      description: updated.description,
+      experienceLevel: updated.experience_level,
+      yearsOfExperience: updated.years_of_experience,
+      skills: userSkills
+    });
 
     return res.status(200).json({
       success: true,

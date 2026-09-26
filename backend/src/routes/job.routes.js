@@ -10,6 +10,8 @@ router.use(authenticate);
 router.post('/', jobController.createJob);
 router.get('/', jobController.listJobs);
 router.get('/mine', jobController.getMyJobs);
+router.get('/recommended', jobController.getRecommendedJobs);
+router.get('/:jobId/candidates', jobController.getRankedCandidatesForJob);
 router.get('/:jobId', jobController.getJobById);
 router.patch('/:jobId/status', jobController.updateJobStatus);
 

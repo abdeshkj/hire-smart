@@ -20,8 +20,12 @@ class Settings(BaseSettings):
     # AI & Embeddings
     GEMINI_API_KEY: str = Field(default="your_gemini_api_key_here", description="Google Gemini API Key")
     GEMINI_MODEL: str = "gemini-1.5-flash"
-    EMBEDDING_MODEL: str = "models/embedding-001"
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     VECTOR_DB_URL: str = Field(default="your_vector_db_url_here", description="Vector database endpoint")
+    DATABASE_URL: str = Field(
+        default="postgresql://postgres:password@localhost:5432/hiresmart_dev",
+        description="PostgreSQL Database URL with pgvector"
+    )
 
     @field_validator("ALLOWED_ORIGINS", mode="after")
     @classmethod

@@ -8,6 +8,7 @@ const {
   getUserSkills
 } = require('../models/skill.model');
 const ApiError = require('../utils/ApiError');
+const { triggerSkillEmbedding } = require('../services/mlService.client');
 
 const VALID_PROFICIENCY_LEVELS = ['beginner', 'intermediate', 'advanced', 'expert'];
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -31,6 +32,8 @@ const createSkill = async (req, res, next) => {
       name: name.trim(),
       category: category ? category.trim() : null
     });
+
+    triggerSkillEmbedding(skill.id, skill.name);
 
     res.status(201).json({
       success: true,
@@ -90,6 +93,7 @@ const addMySkill = async (req, res, next) => {
       targetSkill = await findSkillByName(resolvedSkillName.trim());
       if (!targetSkill) {
         targetSkill = await createSkillModel({ name: resolvedSkillName.trim() });
+        triggerSkillEmbedding(targetSkill.id, targetSkill.name);
       }
     } else {
       throw new ApiError(400, 'Either skillId or skillName is required');

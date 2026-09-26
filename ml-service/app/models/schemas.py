@@ -1,5 +1,5 @@
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional, Union
+from pydantic import BaseModel, Field, ConfigDict
 
 # ==========================================
 # Health Schemas
@@ -22,6 +22,40 @@ class EmbeddingResponse(BaseModel):
     embeddings: List[List[float]] = Field(..., description="Generated vector embeddings")
     dimensions: int = Field(..., description="Dimensionality of the vector embeddings")
 
+class ProfileFields(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    fullName: Optional[str] = None
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    description: Optional[str] = None
+    experienceLevel: Optional[str] = None
+    experience_level: Optional[str] = None
+    yearsOfExperience: Optional[Union[int, float, str]] = None
+    years_of_experience: Optional[Union[int, float, str]] = None
+    skills: Optional[List[Union[str, dict]]] = Field(default_factory=list)
+
+class ProfileEmbeddingRequest(BaseModel):
+    userId: str = Field(..., min_length=1, description="ID of user profile to embed")
+    profileFields: ProfileFields
+
+class JobEmbeddingRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    jobId: str = Field(..., min_length=1, description="ID of job to embed")
+    title: str = Field(..., min_length=1, description="Job title")
+    description: Optional[str] = Field(default="", description="Job description")
+    experienceRequirement: Optional[str] = None
+    experience_requirement: Optional[str] = None
+    skills: Optional[List[Union[str, dict]]] = Field(default_factory=list)
+
+class SkillEmbeddingRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    skillId: str = Field(..., min_length=1, description="ID of skill to embed")
+    name: str = Field(..., min_length=1, description="Skill name")
+
+class EmbeddingWriteResponse(BaseModel):
+    success: bool = True
+    dimensions: int = 384
+
 
 # ==========================================
 # Candidate Ranking Schemas
@@ -34,21 +68,49 @@ class CandidateProfile(BaseModel):
     resume_text: Optional[str] = Field(default=None, description="Parsed text of candidate resume")
 
 class CandidateScore(BaseModel):
-    candidate_id: str
-    match_score: float = Field(..., ge=0.0, le=1.0, description="Normalized match score between 0.0 and 1.0")
-    skill_alignment: float = Field(..., ge=0.0, le=1.0, description="Skill overlap score")
-    relevance_summary: str = Field(..., description="Brief explanation of fit")
+    model_config = ConfigDict(extra="allow")
+    freelancer_id: str
+    semantic_score: float
+    skill_overlap_score: float
+    lexical_overlap_score: float
+    combined_score: float
+    matched_skills: List[str] = Field(default_factory=list)
 
 class RankingRequest(BaseModel):
-    job_description: str = Field(..., min_length=10, description="Target job description")
-    required_skills: List[str] = Field(default_factory=list, description="Mandatory required skills")
-    candidates: List[CandidateProfile] = Field(..., min_length=1, description="List of candidates to rank")
-    top_k: Optional[int] = Field(default=10, description="Number of top candidates to return")
+    model_config = ConfigDict(extra="allow")
+    jobId: Optional[str] = None
+    job_id: Optional[str] = None
+    top_k: Optional[int] = Field(default=50, ge=1, le=100)
+    job_description: Optional[str] = None
+    required_skills: Optional[List[str]] = None
+    candidates: Optional[List[CandidateProfile]] = None
 
 class RankingResponse(BaseModel):
+    job_id: str
     job_title: Optional[str] = None
-    ranked_candidates: List[CandidateScore]
     total_evaluated: int
+    ranked_candidates: List[CandidateScore]
+
+class JobScore(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    job_id: str
+    title: str
+    semantic_score: float
+    skill_overlap_score: float
+    lexical_overlap_score: float
+    combined_score: float
+    matched_skills: List[str] = Field(default_factory=list)
+
+class JobRankingRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    freelancerId: Optional[str] = None
+    freelancer_id: Optional[str] = None
+    top_k: Optional[int] = Field(default=50, ge=1, le=100)
+
+class JobRankingResponse(BaseModel):
+    freelancer_id: str
+    total_evaluated: int
+    ranked_jobs: List[JobScore]
 
 
 # ==========================================

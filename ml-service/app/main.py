@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.database import init_db_pool, close_db_pool
 from app.utils.logger import logger
 from app.api.routes import health, embeddings, ranking, rag
 
@@ -12,9 +13,11 @@ async def lifespan(app: FastAPI):
     # Startup logic
     logger.info(f"Starting {settings.APP_NAME} in [{settings.ENVIRONMENT}] mode")
     logger.info(f"Allowed CORS origins: {settings.ALLOWED_ORIGINS}")
+    init_db_pool()
     yield
     # Shutdown logic
     logger.info(f"Shutting down {settings.APP_NAME}")
+    close_db_pool()
 
 def create_application() -> FastAPI:
     """FastAPI application factory."""
