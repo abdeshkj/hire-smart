@@ -9,6 +9,7 @@ const {
   getJobSkills
 } = require('../models/job.model');
 const { createSkill } = require('../models/skill.model');
+const { triggerJobEmbedding } = require('../services/mlService.client');
 const ApiError = require('../utils/ApiError');
 
 const VALID_EXPERIENCE_LEVELS = ['entry', 'intermediate', 'expert'];
@@ -96,6 +97,14 @@ const createJob = async (req, res, next) => {
 
     // Fetch attached skills
     const skills = await getJobSkills(job.id);
+
+    // Trigger ML service embedding generation (fire-and-forget, non-blocking)
+    triggerJobEmbedding(job.id, {
+      title: job.title,
+      description: job.description,
+      experienceRequirement: job.experience_requirement,
+      skills: skills.map((s) => s.name)
+    });
 
     res.status(201).json({
       success: true,
